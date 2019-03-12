@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta http-equiv="X-UA-Compatible" content="ie=edge" />
+    <title>Squares</title>
+
+    <style>
+      body {
+        margin: 0;
+        overflow: hidden;
+        background: black;
+      }
+      canvas {
+        width: 100vw;
+        height: 100vh;
+      }
+    </style>
+  </head>
+
+  <body>
+    <canvas id="scene"></canvas>
+  </body>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/2.1.2/TweenMax.min.js"></script>
+  <script>
+    const canvas = document.querySelector("#scene");
+
+    let width = canvas.offsetWidth;
+    let height = canvas.offsetHeight;
+
+    const ctx = canvas.getContext("2d");
+
+    const onResize = () => {
+      width = canvas.offsetWidth;
+      height = canvas.offsetHeight;
+
+      if (window.devicePixelRatio > 1) {
+        canvas.width = canvas.clientWidth * 2;
+        canvas.height = canvas.clientHeight * 2;
+        ctx.scale(2, 2);
+      } else {
+        canvas.width = width;
+        canvas.height = height;
+      }
+    };
+
+    window.addEventListener("resize", onResize);
+    onResize();
+
+    let PERSPECTIVE = width * 0.8;
+    let PROJECTION_CENTER_X = width / 2;
+    let PROJECTION_CENTER_Y = height / 2;
+    let shapes = [];
+
+    class Shape {
+      constructor() {
+        this.x = (Math.random() - 0.5) * width;
+        this.y = (Math.random() - 0.5) * height;
+        this.z = Math.random() * width;
+        this.radius = 10;
+
+        this.xProjection = 0;
+        this.yProjection = 0;
+        this.zProjection = 0;
+
+        TweenMax.to(this, Math.random() * 10 + 15, {
+          z: width,
+          repeat: -1,
+          yoyo: true,
+          ease: Power2.easeOut,
+          yoyoEase: true,
+          delay: Math.random() * -25
+        });
+      }
+
+      project() {
+        this.zProjection = PERSPECTIVE / (PERSPECTIVE + this.z);
+        this.xProjection = this.x * this.zProjection + PROJECTION_CENTER_X;
+        this.yProjection = this.y * this.zProjection + PROJECTION_CENTER_Y;
+      }
+
+      getRandomColor() {
+        var letters = "0123456789ABCDEF";
+        var color = "#";
+        for (var i = 0; i < 6; i++) {
+          color += letters[Math.floor(Math.random() * 16)];
+        }
+        return color;
+      }
+
+      draw() {
+        this.project();
+        ctx.globalAlpha = Math.abs(1 - this.z / width);
+        ctx.fillStyle = this.getRandomColor();
+        ctx.fillRect(
+          this.xProjection - this.radius,
+          this.yProjection - this.radius,
+          this.radius * 2 * this.zProjection,
+          this.radius * 2 * this.zProjection
+        );
+      }
+    }
+
+    const numShapes = 2000;
+    for (let i = 0; i < numShapes; i++) {
+      shapes.push(new Shape());
+    }
+
+    console.log(shapes);
+    const render = () => {
+      ctx.clearRect(0, 0, width, height);
+      shapes.forEach(s => s.draw());
+      window.requestAnimationFrame(render);
+    };
+
+    render();
+  </script>
+</html>
